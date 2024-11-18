@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.calculator {
+    width: 100%;
+    max-width: 450px;
+    margin: 20px auto;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.history {
+    position: relative;
+    height: 20px;
+    padding: 0 15px;
+}
+
+.history-icon {
+    color: #70757a;
+    font-size: 18px;
+}
+
+.display {
+    text-align: right;
+    padding: 20px 15px;
+    font-size: 30px;
+    color: #202124;
+    min-height: 60px;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    padding: 0 2px;
+}
+
+.btn {
+    background: #f1f3f4;
+    border: none;
+    border-radius: 4px;
+    color: #202124;
+    font-size: 14px;
+    height: 36px;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:hover {
+    background: #e8eaeb;
+}
+
+.rad-deg {
+    grid-column: span 2;
+    display: flex;
+    gap: 1px;
+}
+
+.rad-deg .btn {
+    flex: 1;
+    font-size: 13px;
+}
+
+.function {
+    color: #4285f4;
+}
+
+.number {
+    font-size: 15px;
+}
+
+.equals {
+    background: #4285f4;
+    color: white;
+}
+
+.equals:hover {
+    background: #3b78e7;
+}
+
+/* Special styling for specific functions */
+.function.trig, .function.log {
+    font-size: 13px;
+}
+
+.operator {
+    color: #444746;
+}
+
+/* First row special width */
+.rad-deg {
+    width: 100%;
+}
+</style>
+</head>
+<body>
+<div class="calculator">
+    
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+        <div class="rad-deg">
+            <button class="btn function" onclick="setAngleMode('rad')">Rad</button>
+            <button class="btn function" onclick="setAngleMode('deg')">Deg</button>
+        </div>
+        <button class="btn function" onclick="factorial()">x!</button>
+        <button class="btn operator" onclick="addToExpression('(')">(</button>
+        <button class="btn operator" onclick="addToExpression(')')">)</button>
+        <button class="btn operator" onclick="percentage()">%</button>
+        <button class="btn operator" onclick="clearDisplay()">AC</button>
+
+        <button class="btn function" onclick="toggleInverse()">Inv</button>
+        <button class="btn function trig" onclick="trigFunction('sin')">sin</button>
+        <button class="btn function log" onclick="addToExpression('ln(')">ln</button>
+        <button class="btn number" onclick="addToExpression('7')">7</button>
+        <button class="btn number" onclick="addToExpression('8')">8</button>
+        <button class="btn number" onclick="addToExpression('9')">9</button>
+        <button class="btn operator" onclick="addToExpression('/')">÷</button>
+
+        <button class="btn function" onclick="addToExpression('π')">π</button>
+        <button class="btn function trig" onclick="trigFunction('cos')">cos</button>
+        <button class="btn function log" onclick="addToExpression('log(')">log</button>
+        <button class="btn number" onclick="addToExpression('4')">4</button>
+        <button class="btn number" onclick="addToExpression('5')">5</button>
+        <button class="btn number" onclick="addToExpression('6')">6</button>
+        <button class="btn operator" onclick="addToExpression('*')">×</button>
+
+        <button class="btn function" onclick="addToExpression('e')">e</button>
+        <button class="btn function trig" onclick="trigFunction('tan')">tan</button>
+        <button class="btn function" onclick="addToExpression('√(')">√</button>
+        <button class="btn number" onclick="addToExpression('1')">1</button>
+        <button class="btn number" onclick="addToExpression('2')">2</button>
+        <button class="btn number" onclick="addToExpression('3')">3</button>
+        <button class="btn operator" onclick="addToExpression('-')">−</button>
+
+        <button class="btn function" onclick="useAnswer()">Ans</button>
+        <button class="btn function" onclick="addToExpression('E')">EXP</button>
+        <button class="btn function" onclick="addToExpression('^')">xʸ</button>
+        <button class="btn number" onclick="addToExpression('0')">0</button>
+        <button class="btn number" onclick="addToExpression('.')">.</button>
+        <button class="btn equals" onclick="calculate()">=</button>
+        <button class="btn operator" onclick="addToExpression('+')">+</button>
+    </div>
+</div>
+
+<script>
+let currentExpression = '';
+let lastAnswer = 0;
+let angleMode = 'rad';
+let isInverse = false;
+let memory = 0;
+
+function updateDisplay(value) {
+    const display = document.getElementById('display');
+    display.textContent = value;
+}
+
+function addToExpression(value) {
+    if (currentExpression === '0' && !isNaN(value)) {
+        currentExpression = value;
+    } else {
+        currentExpression += value;
+    }
+    updateDisplay(currentExpression);
+}
+
+function clearDisplay() {
+    currentExpression = '';
+    updateDisplay('0');
+}
+
+function setAngleMode(mode) {
+    angleMode = mode;
+    document.querySelectorAll('.rad-deg .btn').forEach(btn => {
+        btn.style.background = btn.textContent.toLowerCase() === mode ? '#e8eaeb' : '#f1f3f4';
+    });
+}
+
+function toggleInverse() {
+    isInverse = !isInverse;
+    const trigButtons = document.querySelectorAll('.function.trig');
+    trigButtons.forEach(btn => {
+        const func = btn.textContent;
+        if (isInverse) {
+            btn.textContent = 'a' + func;
+        } else {
+            btn.textContent = func.replace('a', '');
+        }
+    });
+}
+
+function useAnswer() {
+    currentExpression += lastAnswer.toString();
+    updateDisplay(currentExpression);
+}
+
+function factorial() {
+    try {
+        const num = parseInt(currentExpression);
+        if (num >= 0) {
+            let result = 1;
+            for (let i = 2; i <= num; i++) {
+                result *= i;
+            }
+            lastAnswer = result;
+            updateDisplay(result);
+            currentExpression = result.toString();
+        } else {
+            updateDisplay('Error');
+        }
+    } catch (e) {
+        updateDisplay('Error');
+    }
+}
+
+function percentage() {
+    try {
+        const value = eval(currentExpression) / 100;
+        updateDisplay(value);
+        currentExpression = value.toString();
+    } catch (e) {
+        updateDisplay('Error');
+    }
+}
+
+function trigFunction(func) {
+    const prefix = isInverse ? 'a' : '';
+    addToExpression(`${prefix}${func}(`);
+}
+
+function evaluateMathExpression(expression) {
+    
+    expression = expression
+        .replace(/π/g, 'Math.PI')
+        .replace(/e/g, 'Math.E')
+        .replace(/\^/g, '**')
+        .replace(/log\(/g, 'Math.log10(')
+        .replace(/ln\(/g, 'Math.log(')
+        .replace(/√\(/g, 'Math.sqrt(')
+        .replace(/E/g, '*10**');
+
+    
+    const trigFuncs = {
+        'sin': Math.sin,
+        'cos': Math.cos,
+        'tan': Math.tan,
+        'asin': Math.asin,
+        'acos': Math.acos,
+        'atan': Math.atan
+    };
+
+    Object.keys(trigFuncs).forEach(func => {
+        const pattern = new RegExp(`${func}\\((.*?)\\)`, 'g');
+        expression = expression.replace(pattern, (match, p1) => {
+            let value = eval(p1);
+            if (angleMode === 'deg' && !func.startsWith('a')) {
+                value = value * Math.PI / 180;
+            }
+            const result = trigFuncs[func](value);
+            if (angleMode === 'deg' && func.startsWith('a')) {
+                return (result * 180 / Math.PI).toString();
+            }
+            return result.toString();
+        });
+    });
+
+    return eval(expression);
+}
+
+function calculate() {
+    try {
+        const result = evaluateMathExpression(currentExpression);
+        lastAnswer = result;
+        updateDisplay(result);
+        currentExpression = result.toString();
+    } catch (e) {
+        updateDisplay('Error');
+        currentExpression = '';
+    }
+}
+
+
+document.addEventListener('keydown', (event) => {
+    const key = event.key;
+    if (/[0-9.]/.test(key)) {
+        addToExpression(key);
+    } else if (['+', '-', '*', '/', '(', ')', '^'].includes(key)) {
+        addToExpression(key);
+    } else if (key === 'Enter') {
+        calculate();
+    } else if (key === 'Escape') {
+        clearDisplay();
+    } else if (key === 'Backspace') {
+        currentExpression = currentExpression.slice(0, -1);
+        updateDisplay(currentExpression || '0');
+    }
+});
+</script>
+</body>
+</html>
